@@ -1,0 +1,96 @@
+﻿<Window x:Class="ChatClient.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Name="Main"
+    xmlns:my="clr-namespace:ChatClient"
+    xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    Title="Contacts" MinWidth="250" MinHeight="500" Icon="Icons/leaf-big.png"
+    Loaded="Window_Loaded" Closed="Window_Closed"
+    Height="{Binding Source={x:Static my:Properties.Settings.Default}, Path=ApplicationHeight, Mode=TwoWay}"
+    Width="{Binding Source={x:Static my:Properties.Settings.Default}, Path=ApplicationWidth, Mode=TwoWay}"
+    Top="{Binding Source={x:Static my:Properties.Settings.Default}, Path=ApplicationTop, Mode=TwoWay}"
+    Left="{Binding Source={x:Static my:Properties.Settings.Default}, Path=ApplicationLeft, Mode=TwoWay}">
+    <Window.Resources>
+        <my:StatusConverter x:Key="statusConverter" />
+        <CollectionViewSource Source="{Binding ContactsCollection, ElementName=Main, Mode=OneWay}" x:Key="SortedContactsCollection">
+            <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Nickname" />
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+        <Style TargetType="{x:Type ListBoxItem}">
+            <Style.Triggers>
+                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#EFEFEF" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <StatusBar Height="23" Name="sbMain" VerticalAlignment="Bottom">
+            <Image Name="sbImage" />
+            <StatusBarItem Name="sbLabel" />
+        </StatusBar>
+        <Menu Height="22" IsMainMenu="True" VerticalAlignment="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="C_onnect" Click="Connect_Click" />
+                <MenuItem Header="_Chat" Click="Chat_Click" />
+                <Separator />
+                <MenuItem Header="_Settings" Click="Settings_Click" />
+                <Separator />
+                <MenuItem Header="_Quit" Click="Quit_Click" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Click="About_Click" />
+            </MenuItem>
+        </Menu>
+        <ListBox Margin="0,42,0,22" Name="lbContacts" MouseDoubleClick="lbContacts_MouseDoubleClick" SelectionMode="Single"
+                 AlternationCount="2"
+                 IsSynchronizedWithCurrentItem="True"
+                 ItemsSource="{Binding Source={StaticResource SortedContactsCollection}}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding Status, Converter={StaticResource statusConverter}}" Margin="3,0,5,0" />
+                        <StackPanel>
+                            <TextBlock Text="{Binding Nickname}" FontWeight="Bold" />
+                            <TextBlock Text="{Binding Status}" />
+                        </StackPanel>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Menu Margin="0,22,0,0" Name="menu1" Height="22" Background="Transparent" VerticalAlignment="Top">
+            <MenuItem HorizontalAlignment="Stretch" Width="{Binding ElementName=menu1,Path=ActualWidth}">
+                <MenuItem.Header>
+                    <TextBlock Name="tbNickname" FontWeight="Bold" Text="{Binding Source={x:Static my:Properties.Settings.Default}, Path=Nickname, Mode=TwoWay}"></TextBlock>
+                </MenuItem.Header>
+                <MenuItem Header="Online" Click="ChangeStatus_Click">
+                    <MenuItem.Icon>
+                        <Image Height="16" Width="16" Source="Icons/leaf.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Away" Click="ChangeStatus_Click">
+                    <MenuItem.Icon>
+                        <Image Height="16" Width="16" Source="Icons/clock.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Busy" Click="ChangeStatus_Click">
+                    <MenuItem.Icon>
+                        <Image Height="16" Width="16" Source="Icons/minus-circle.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Offline" Click="ChangeStatus_Click">
+                    <MenuItem.Icon>
+                        <Image Height="16" Width="16" Source="Icons/user-thief.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem Header="Custom..." Click="ChangeStatus_Click">
+                    <MenuItem.Icon>
+                        <Image Height="16" Width="16" Source="Icons/notebook.png" />
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="Change nickname" Click="miChangeNickname_Click" />
+            </MenuItem>
+        </Menu>
+    </Grid>
+</Window>

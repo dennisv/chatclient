@@ -1,0 +1,7 @@
+*.swp
+*~
+_UpgradeReport_Files
+UpgradeLog.XML
+bin
+obj
+Backup
