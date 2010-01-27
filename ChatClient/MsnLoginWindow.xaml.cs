@@ -8,9 +8,11 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Shapes;
+using System.Threading;
 
 using MSNPSharp;
 using MSNPSharp.Core;
+using System.Windows.Threading;
 
 namespace ChatClient
 {
@@ -39,8 +41,13 @@ namespace ChatClient
 
         void Nameserver_SignedIn(object sender, EventArgs e)
         {
+            if (!this.Dispatcher.CheckAccess()) {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<EventArgs>(Nameserver_SignedIn), sender, e);
+                return;
+            }
+
             m_messenger.Owner.Status = PresenceStatus.Online;
-            MessageBox.Show("Success!");
+            this.Close();
         }
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)

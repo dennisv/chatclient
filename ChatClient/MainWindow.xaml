@@ -13,8 +13,12 @@
         <my:StatusConverter x:Key="statusConverter" />
         <CollectionViewSource Source="{Binding ContactsCollection, ElementName=Main, Mode=OneWay}" x:Key="SortedContactsCollection">
             <CollectionViewSource.SortDescriptions>
+                <scm:SortDescription PropertyName="Status" />
                 <scm:SortDescription PropertyName="Nickname" />
             </CollectionViewSource.SortDescriptions>
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Protocol" />
+            </CollectionViewSource.GroupDescriptions>
         </CollectionViewSource>
         <Style TargetType="{x:Type ListBoxItem}">
             <Style.Triggers>
@@ -23,6 +27,9 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+        <DataTemplate x:Key="ProtocolTemplate">
+            <TextBlock Text="{Binding Path=Name}" FontWeight="Bold" Margin="5,2,0,0" />
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <StatusBar Height="23" Name="sbMain" VerticalAlignment="Bottom">
@@ -59,6 +66,9 @@
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
+            <ListBox.GroupStyle>
+                <GroupStyle HeaderTemplate="{StaticResource ProtocolTemplate}" />
+            </ListBox.GroupStyle>
         </ListBox>
         <Menu Margin="0,22,0,0" Name="menu1" Height="22" Background="Transparent" VerticalAlignment="Top">
             <MenuItem HorizontalAlignment="Stretch" Width="{Binding ElementName=menu1,Path=ActualWidth}">

@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 using Tcp.Chat;
 using System.Collections;
@@ -74,6 +75,59 @@ namespace ChatClient
             this.m_server.Listen();
 
             this.m_messenger = new Messenger();
+            this.m_messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
+        }
+
+        void Nameserver_SignedIn(object sender, EventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<EventArgs>(Nameserver_SignedIn), sender, e);
+                return;
+            }
+
+            this.UpdateContactList();
+        }
+
+        void UpdateContactList()
+        {
+            foreach (MSNPSharp.Contact contact in this.m_messenger.ContactList.All)
+            {
+                contact.ContactOnline += new EventHandler<StatusChangedEventArgs>(contact_ContactOnline);
+                String name = contact.Name;
+                if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+                {
+                    name += " - " + contact.PersonalMessage.Message;
+                }
+                if (contact.Name != contact.Mail)
+                {
+                    name += " (" + contact.Mail + ")";
+                }
+                this.ContactsCollection.Add(new ContactItem(contact.Mail, name, contact.Status.ToString(), "msn"));
+            }
+        }
+
+        void contact_ContactOnline(object sender, StatusChangedEventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<StatusChangedEventArgs>(contact_ContactOnline), sender, e);
+                return;
+            }
+
+            MSNPSharp.Contact contact = (MSNPSharp.Contact)sender;
+            ContactItem c = this.ContactsCollection[ContactIndex(contact.Mail)];
+            String name = contact.Name;
+            if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
+            {
+                name += " - " + contact.PersonalMessage.Message;
+            }
+            if (contact.Name != contact.Mail)
+            {
+                name += " (" + contact.Mail + ")";
+            }
+            c.Nickname = name;
+            c.Status = contact.Status.ToString();
         }
 
         private int ContactIndex(String address)
@@ -335,7 +389,7 @@ namespace ChatClient
         private void Msn_Click(object sender, RoutedEventArgs e)
         {
             MsnLoginWindow window = new MsnLoginWindow(this.m_messenger);
-            window.ShowDialog();
+            window.Show();
         }
     }
 }
