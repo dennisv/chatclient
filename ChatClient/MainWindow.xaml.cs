@@ -37,6 +37,8 @@ namespace ChatClient
         private Contacts m_contacts;
         private Server m_server;
 
+        private Messenger m_messenger;
+
         private Hashtable m_windows;
 
         public static DependencyProperty ContactsCollectionProperty = DependencyProperty.Register("ContactsCollection", typeof(ContactCollection), typeof(MainWindow));
@@ -47,11 +49,6 @@ namespace ChatClient
         }
 
         public MainWindow()
-        {
-            InitializeComponent();
-        }
-
-        public MainWindow(Messenger messenger)
         {
             InitializeComponent();
         }
@@ -75,6 +72,8 @@ namespace ChatClient
             this.m_server = new Server(Properties.Settings.Default.ClientPort);
             this.m_server.ConnectionAccepted += new Server.ConnectionAcceptedHandler(Server_ConnectionAccepted);
             this.m_server.Listen();
+
+            this.m_messenger = new Messenger();
         }
 
         private int ContactIndex(String address)
@@ -331,6 +330,12 @@ namespace ChatClient
                 if (Properties.Settings.Default.ReconnectTimeout != this.m_contacts.ReconnectTimeout)
                     this.m_contacts.ReconnectTimeout = Properties.Settings.Default.ReconnectTimeout;
             }
+        }
+
+        private void Msn_Click(object sender, RoutedEventArgs e)
+        {
+            MsnLoginWindow window = new MsnLoginWindow(this.m_messenger);
+            window.ShowDialog();
         }
     }
 }

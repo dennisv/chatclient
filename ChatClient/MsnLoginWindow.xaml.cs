@@ -19,13 +19,15 @@ namespace ChatClient
     /// </summary>
     public partial class MsnLoginWindow : Window
     {
-        private Messenger messenger = new Messenger();
-        public MsnLoginWindow()
+        private Messenger m_messenger;
+        public MsnLoginWindow(Messenger messenger)
         {
             InitializeComponent();
 
-            messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
-            messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
+            m_messenger = messenger;
+
+            m_messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
+            m_messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
         }
 
         void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
@@ -37,7 +39,7 @@ namespace ChatClient
 
         void Nameserver_SignedIn(object sender, EventArgs e)
         {
-            messenger.Owner.Status = PresenceStatus.Online;
+            m_messenger.Owner.Status = PresenceStatus.Online;
             MessageBox.Show("Success!");
         }
 
@@ -49,11 +51,11 @@ namespace ChatClient
                 return;
             }
 
-            messenger.Credentials = new Credentials(tbEmailaddress.Text, tbPassword.Password, MsnProtocol.MSNP18);
+            m_messenger.Credentials = new Credentials(tbEmailaddress.Text, tbPassword.Password, MsnProtocol.MSNP18);
 
             btnLogin.Content = "Connecting...";
             btnLogin.IsEnabled = false;
-            messenger.Connect();
+            m_messenger.Connect();
         }
     }
 }

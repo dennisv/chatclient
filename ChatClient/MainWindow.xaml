@@ -31,6 +31,8 @@
         </StatusBar>
         <Menu Height="22" IsMainMenu="True" VerticalAlignment="Top">
             <MenuItem Header="_File">
+                <MenuItem Header="Login to _MSN" Click="Msn_Click" />
+                <Separator />
                 <MenuItem Header="C_onnect" Click="Connect_Click" />
                 <MenuItem Header="_Chat" Click="Chat_Click" />
                 <Separator />
