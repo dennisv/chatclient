@@ -9,6 +9,7 @@ namespace ChatClient
         private string nickname;
         private string status;
         private string protocol;
+        private MSNPSharp.Contact m_contact;
 
         public String Address
         {
@@ -67,6 +68,12 @@ namespace ChatClient
             }
         }
 
+        public MSNPSharp.Contact Contact
+        {
+            get { return this.m_contact; }
+            set { this.m_contact = value; }
+        }
+
         public ContactItem() { }
         public ContactItem(String address, String nickname, String status, String protocol)
         {
@@ -74,6 +81,15 @@ namespace ChatClient
             this.nickname = nickname;
             this.status = status;
             this.protocol = protocol;
+        }
+
+        public ContactItem(String address, String nickname, String status, String protocol, MSNPSharp.Contact contact)
+        {
+            this.address = address;
+            this.nickname = nickname;
+            this.status = status;
+            this.protocol = protocol;
+            this.m_contact = contact;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

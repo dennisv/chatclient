@@ -2,13 +2,14 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Login to MSN Messenger" Height="240" Width="200" Icon="Icons/leaf-big.png"
-        WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+        WindowStyle="ToolWindow" WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Loaded="Window_Loaded">
     <StackPanel>
         <Label Content="Email address" Height="28" Width="154" FontWeight="Bold" Margin="0,15,0,0" />
         <TextBox Height="23" Name="tbEmailaddress" Width="154" Text="chat@devmonkey.eu" />
         <Label Content="Password" Height="28" Width="154" FontWeight="Bold" />
         <PasswordBox Height="23" Name="tbPassword" Width="154" Password="msnschool" />
         <Button Content="Login" Height="23" Name="btnLogin" Width="100" Margin="0,10,0,0" Click="btnLogin_Click" />
-        <Button Content="Skip" Height="23" Name="btnSkip" Width="75" Margin="0,15,0,0" IsEnabled="False" />
+        <Button Content="Disconnect" Height="23" Name="btnDisconnect" Width="100" Margin="0,15,0,0" Click="btnDisconnect_Click" IsEnabled="False" />
     </StackPanel>
 </Window>

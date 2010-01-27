@@ -32,6 +32,16 @@ namespace ChatClient
             m_messenger.Nameserver.AuthenticationError += new EventHandler<ExceptionEventArgs>(Nameserver_AuthenticationError);
         }
 
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (this.m_messenger.Connected)
+            {
+                btnLogin.Content = "Connected!";
+                btnLogin.IsEnabled = false;
+                btnDisconnect.IsEnabled = true;
+            }
+        }
+
         void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
         {
             MessageBox.Show("Authentication failed, check your emailaddress or password.", e.Exception.InnerException.Message);
@@ -46,7 +56,9 @@ namespace ChatClient
                 return;
             }
 
-            m_messenger.Owner.Status = PresenceStatus.Online;
+            this.m_messenger.Owner.Status = PresenceStatus.Online;
+            btnLogin.Content = "Connected!";
+            btnDisconnect.IsEnabled = true;
             this.Close();
         }
 
@@ -62,7 +74,16 @@ namespace ChatClient
 
             btnLogin.Content = "Connecting...";
             btnLogin.IsEnabled = false;
+            btnDisconnect.IsEnabled = true;
             m_messenger.Connect();
+        }
+
+        private void btnDisconnect_Click(object sender, RoutedEventArgs e)
+        {
+            this.m_messenger.Disconnect();
+            btnLogin.Content = "Login";
+            btnLogin.IsEnabled = true;
+            btnDisconnect.IsEnabled = false;
         }
     }
 }

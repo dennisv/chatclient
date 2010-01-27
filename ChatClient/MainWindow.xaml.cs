@@ -20,6 +20,7 @@ using System.Net;
 
 using MSNPSharp;
 using MSNPSharp.Core;
+using System.IO;
 
 namespace ChatClient
 {
@@ -49,6 +50,15 @@ namespace ChatClient
             set { SetValue(ContactsCollectionProperty, value); }
         }
 
+        private List<MsnChatWindow> m_conversationwindows = new List<MsnChatWindow>(0);
+        public List<MsnChatWindow> ConversationWindows
+        {
+            get
+            {
+                return m_conversationwindows;
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -76,9 +86,66 @@ namespace ChatClient
 
             this.m_messenger = new Messenger();
             this.m_messenger.Nameserver.SignedIn += new EventHandler<EventArgs>(Nameserver_SignedIn);
+            this.m_messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
+            this.m_messenger.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
+            this.m_messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(m_messenger_ConversationCreated);
         }
 
-        void Nameserver_SignedIn(object sender, EventArgs e)
+        private delegate MsnChatWindow CreateConversationDelegate(Conversation conversation, MSNPSharp.Contact remote);
+        private MsnChatWindow CreateConversationWindow(Conversation conversation, MSNPSharp.Contact remote)
+        {
+            foreach (MsnChatWindow cwindow in ConversationWindows)
+            {
+                if (cwindow.CanAttach(conversation))
+                {
+                    cwindow.AttachConversation(conversation);
+                    return cwindow;
+                }
+            }
+
+            MsnChatWindow chatWindow = new MsnChatWindow(conversation, this, remote);
+            ConversationWindows.Add(chatWindow);
+            return chatWindow;
+        }
+
+        void m_messenger_ConversationCreated(object sender, ConversationCreatedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine("conversation created!");
+            if(e.Initiator == null)
+                e.Conversation.ContactJoined += new EventHandler<ContactEventArgs>(Conversation_ContactJoined);
+        }
+
+        void Conversation_ContactJoined(object sender, ContactEventArgs e)
+        {
+            this.Dispatcher.Invoke(new CreateConversationDelegate(CreateConversationWindow), new object[] { sender, null });
+            ((Conversation)sender).ContactJoined -= Conversation_ContactJoined;
+        }
+
+        void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
+        {
+            for (int index = 0; index < this.ContactsCollection.Count(); index++)
+            {
+                if (this.ContactsCollection[index].Protocol == "msn")
+                    this.ContactsCollection.RemoveAt(index);
+            }
+        }
+
+        void Owner_DisplayImageChanged(object sender, EventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<EventArgs>(Owner_DisplayImageChanged), sender, e);
+                return;
+            }
+
+            if (!Directory.Exists("displayimages"))
+                Directory.CreateDirectory("displayimages");
+
+            String filename = "displayimages/" + ((MSNPSharp.Contact)sender).Mail + ".png";
+            this.m_messenger.Owner.DisplayImage.Image.Save(filename, System.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        private void Nameserver_SignedIn(object sender, EventArgs e)
         {
             if (!this.Dispatcher.CheckAccess())
             {
@@ -89,34 +156,8 @@ namespace ChatClient
             this.UpdateContactList();
         }
 
-        void UpdateContactList()
+        private String ContactToMsnName(MSNPSharp.Contact contact)
         {
-            foreach (MSNPSharp.Contact contact in this.m_messenger.ContactList.All)
-            {
-                contact.ContactOnline += new EventHandler<StatusChangedEventArgs>(contact_ContactOnline);
-                String name = contact.Name;
-                if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
-                {
-                    name += " - " + contact.PersonalMessage.Message;
-                }
-                if (contact.Name != contact.Mail)
-                {
-                    name += " (" + contact.Mail + ")";
-                }
-                this.ContactsCollection.Add(new ContactItem(contact.Mail, name, contact.Status.ToString(), "msn"));
-            }
-        }
-
-        void contact_ContactOnline(object sender, StatusChangedEventArgs e)
-        {
-            if (!this.Dispatcher.CheckAccess())
-            {
-                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<StatusChangedEventArgs>(contact_ContactOnline), sender, e);
-                return;
-            }
-
-            MSNPSharp.Contact contact = (MSNPSharp.Contact)sender;
-            ContactItem c = this.ContactsCollection[ContactIndex(contact.Mail)];
             String name = contact.Name;
             if (contact.PersonalMessage != null && !String.IsNullOrEmpty(contact.PersonalMessage.Message))
             {
@@ -126,6 +167,61 @@ namespace ChatClient
             {
                 name += " (" + contact.Mail + ")";
             }
+
+            return name;
+        }
+
+        private void UpdateContactList()
+        {
+            foreach (MSNPSharp.Contact contact in this.m_messenger.ContactList.All)
+            {
+                contact.ContactOnline += new EventHandler<StatusChangedEventArgs>(contact_ContactOnline);
+                contact.StatusChanged += new EventHandler<StatusChangedEventArgs>(contact_StatusChanged);
+                contact.ScreenNameChanged += new EventHandler<EventArgs>(contact_ScreenNameChanged);
+                contact.PersonalMessageChanged += new EventHandler<EventArgs>(contact_ScreenNameChanged);
+                String name = ContactToMsnName(contact);
+                this.ContactsCollection.Add(new ContactItem(contact.Mail, name, contact.Status.ToString(), "msn", contact));
+            }
+        }
+
+        void contact_ScreenNameChanged(object sender, EventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<EventArgs>(contact_ScreenNameChanged), sender, e);
+                return;
+            }
+
+            MSNPSharp.Contact contact = (MSNPSharp.Contact)sender;
+            ContactItem c = this.ContactsCollection[ContactIndex(contact.Mail)];
+            String name = ContactToMsnName(contact);
+            c.Nickname = name;
+        }
+
+        private void contact_StatusChanged(object sender, StatusChangedEventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<StatusChangedEventArgs>(contact_StatusChanged), sender, e);
+                return;
+            }
+
+            MSNPSharp.Contact contact = (MSNPSharp.Contact)sender;
+            ContactItem c = this.ContactsCollection[ContactIndex(contact.Mail)];
+            c.Status = contact.Status.ToString();
+        }
+
+        private void contact_ContactOnline(object sender, StatusChangedEventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<StatusChangedEventArgs>(contact_ContactOnline), sender, e);
+                return;
+            }
+
+            MSNPSharp.Contact contact = (MSNPSharp.Contact)sender;
+            ContactItem c = this.ContactsCollection[ContactIndex(contact.Mail)];
+            String name = ContactToMsnName(contact);
             c.Nickname = name;
             c.Status = contact.Status.ToString();
         }
@@ -300,6 +396,40 @@ namespace ChatClient
             if (lbContacts.SelectedItem != null)
             {
                 ContactItem selected = (ContactItem)lbContacts.SelectedItem;
+                if (selected.Protocol == "msn")
+                {
+                    MSNPSharp.Contact contact = selected.Contact;
+
+                    bool activate = false;
+                    MsnChatWindow activeForm = null;
+                    foreach (MsnChatWindow conv in ConversationWindows)
+                    {
+                        if (conv.Conversation.HasContact(contact) &&
+                            (conv.Conversation.Type & ConversationType.Chat) == ConversationType.Chat)
+                        {
+                            activeForm = conv;
+                            activate = true;
+                        }
+
+                    }
+
+                    if (activate)
+                    {
+                        if (activeForm.WindowState == WindowState.Minimized)
+                            activeForm.Show();
+
+                        activeForm.Activate();
+                        return;
+                    }
+
+                    Conversation convers = this.m_messenger.CreateConversation();
+                    MsnChatWindow window = CreateConversationWindow(convers, contact);
+
+                    window.Show();
+
+                    return;
+                }
+
                 if (!this.m_windows.Contains(selected.Address) || !((ChatWindow)this.m_windows[selected.Address]).Open)
                 {
                     ChatWindow window = new ChatWindow(selected.Address, Properties.Settings.Default.ClientPort);
@@ -388,8 +518,9 @@ namespace ChatClient
 
         private void Msn_Click(object sender, RoutedEventArgs e)
         {
-            MsnLoginWindow window = new MsnLoginWindow(this.m_messenger);
-            window.Show();
+            MsnLoginWindow msn = new MsnLoginWindow(this.m_messenger);
+            msn.Owner = this;
+            msn.Show();
         }
     }
 }
