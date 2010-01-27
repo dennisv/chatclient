@@ -17,6 +17,9 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Net;
 
+using MSNPSharp;
+using MSNPSharp.Core;
+
 namespace ChatClient
 {
     /// <summary>
@@ -44,6 +47,11 @@ namespace ChatClient
         }
 
         public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        public MainWindow(Messenger messenger)
         {
             InitializeComponent();
         }
@@ -113,25 +121,25 @@ namespace ChatClient
         private void Contacts_ContactsList(ArrayList contacts)
         {
             this.ContactsCollection.Clear();
-            foreach(Contact contact in contacts)
+            foreach(Tcp.Chat.Contact contact in contacts)
             {
-                this.ContactsCollection.Add(contact);
+                this.ContactsCollection.Add(new ContactItem(contact.Address, contact.Nickname, contact.Status, "chat"));
             }
         }
 
         private void Contacts_ContactsAdd(ArrayList contacts)
         {
-            foreach (Contact contact in contacts)
+            foreach (Tcp.Chat.Contact contact in contacts)
             {
-                this.ContactsCollection.Add(contact);
+                this.ContactsCollection.Add(new ContactItem(contact.Address, contact.Nickname, contact.Status, "chat"));
             }
         }
 
         private void Contacts_ContactsUpdate(ArrayList contacts)
         {
-            foreach (Contact contact in contacts)
+            foreach (Tcp.Chat.Contact contact in contacts)
             {
-                Contact c = this.ContactsCollection[ContactIndex(contact.Address)];
+                ContactItem c = this.ContactsCollection[ContactIndex(contact.Address)];
                 c.Nickname = contact.Nickname;
                 c.Status = contact.Status;
 
@@ -146,7 +154,7 @@ namespace ChatClient
 
         private void Contacts_ContactsDelete(ArrayList contacts)
         {
-            foreach (Contact contact in contacts)
+            foreach (Tcp.Chat.Contact contact in contacts)
             {
                 this.ContactsCollection.RemoveAt(ContactIndex(contact.Address));
             }
@@ -238,7 +246,7 @@ namespace ChatClient
         {
             if (lbContacts.SelectedItem != null)
             {
-                Contact selected = (Contact)lbContacts.SelectedItem;
+                ContactItem selected = (ContactItem)lbContacts.SelectedItem;
                 if (!this.m_windows.Contains(selected.Address) || !((ChatWindow)this.m_windows[selected.Address]).Open)
                 {
                     ChatWindow window = new ChatWindow(selected.Address, Properties.Settings.Default.ClientPort);

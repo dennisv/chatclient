@@ -4,15 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Collections.ObjectModel;
 
-using Tcp.Chat;
 using System.ComponentModel;
 using System.Collections.Specialized;
 
 namespace ChatClient
 {
-    public class ContactCollection : ObservableCollection<Contact>
+    public class ContactCollection : ObservableCollection<ContactItem>
     {
-        protected override void InsertItem(int index, Contact item)
+        protected override void InsertItem(int index, ContactItem item)
         {
             base.InsertItem(index, item);
             item.PropertyChanged += Item_PropertyChanged;
@@ -26,13 +25,13 @@ namespace ChatClient
 
         protected override void ClearItems()
         {
-            foreach (Contact con in this.Items)
+            foreach (ContactItem con in this.Items)
                 con.PropertyChanged -= Item_PropertyChanged;
 
             base.ClearItems();
         }
 
-        protected override void SetItem(int index, Contact item)
+        protected override void SetItem(int index, ContactItem item)
         {
             this.Items[index].PropertyChanged -= Item_PropertyChanged;
             base.SetItem(index, item);
@@ -41,7 +40,7 @@ namespace ChatClient
 
         private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            Contact item = (Contact)sender;
+            ContactItem item = (ContactItem)sender;
             OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, item, item, this.IndexOf(item)));
         }  
     }

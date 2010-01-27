@@ -99,6 +99,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ContactItem.cs" />
     <Compile Include="MsnChatWindow.xaml.cs">
       <DependentUpon>MsnChatWindow.xaml</DependentUpon>
     </Compile>

@@ -37,8 +37,8 @@ namespace ChatClient
 
         void Nameserver_SignedIn(object sender, EventArgs e)
         {
-            MessageBox.Show("Success!");
             messenger.Owner.Status = PresenceStatus.Online;
+            MessageBox.Show("Success!");
         }
 
         private void btnLogin_Click(object sender, RoutedEventArgs e)
