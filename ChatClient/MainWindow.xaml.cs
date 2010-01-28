@@ -89,6 +89,40 @@ namespace ChatClient
             this.m_messenger.Nameserver.SignedOff += new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff);
             this.m_messenger.Owner.DisplayImageChanged += new EventHandler<EventArgs>(Owner_DisplayImageChanged);
             this.m_messenger.ConversationCreated += new EventHandler<ConversationCreatedEventArgs>(m_messenger_ConversationCreated);
+            this.m_messenger.ContactService.ReverseAdded += new EventHandler<ContactEventArgs>(ContactService_ReverseAdded);
+        }
+
+        void ContactService_ReverseAdded(object sender, ContactEventArgs e)
+        {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<ContactEventArgs>(ContactService_ReverseAdded), sender, e);
+                return;
+            }
+
+            MSNPSharp.Contact contact = e.Contact;
+            if (this.m_messenger.Nameserver.Owner.NotifyPrivacy == NotifyPrivacy.PromptOnAdd)
+            {
+                if (contact.OnPendingList ||
+                    (contact.OnReverseList && !contact.OnAllowedList && !contact.OnBlockedList && !contact.OnPendingList))
+                {
+                    if (MessageBox.Show("Want to add " + contact.Name + " (" + contact.Mail + ") to your buddylist?", "Buddy invite", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    {
+                        this.m_messenger.Nameserver.ContactService.AddNewContact(contact.Mail);
+                        System.Threading.Thread.Sleep(200);
+                        contact.OnPendingList = false;
+                    }
+                    else
+                    {
+                        contact.Blocked = true;
+                    }
+                    contact.OnPendingList = false;
+                }
+                else
+                {
+                    MessageBox.Show(contact.Mail + " accepted your invitation and added you their contact list.");
+                }
+            }
         }
 
         private delegate MsnChatWindow CreateConversationDelegate(Conversation conversation, MSNPSharp.Contact remote);
@@ -123,10 +157,16 @@ namespace ChatClient
 
         void Nameserver_SignedOff(object sender, SignedOffEventArgs e)
         {
+            if (!this.Dispatcher.CheckAccess())
+            {
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<SignedOffEventArgs>(Nameserver_SignedOff), sender, e);
+                return;
+            }
+
             for (int index = 0; index < this.ContactsCollection.Count(); index++)
             {
                 if (this.ContactsCollection[index].Protocol == "msn")
-                    this.ContactsCollection.RemoveAt(index);
+                    this.ContactsCollection.Remove(this.ContactsCollection[index]);
             }
         }
 
@@ -152,6 +192,10 @@ namespace ChatClient
                 this.Dispatcher.Invoke(DispatcherPriority.Normal, new EventHandler<EventArgs>(Nameserver_SignedIn), sender, e);
                 return;
             }
+
+            System.Media.SoundPlayer sound = new System.Media.SoundPlayer();
+            sound.SoundLocation = @"C:\Windows\Media\tada.wav";
+            sound.Play();
 
             this.UpdateContactList();
         }

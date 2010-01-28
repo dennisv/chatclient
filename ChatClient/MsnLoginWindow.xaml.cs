@@ -44,6 +44,10 @@ namespace ChatClient
 
         void Nameserver_AuthenticationError(object sender, ExceptionEventArgs e)
         {
+            System.Media.SoundPlayer sound = new System.Media.SoundPlayer();
+            sound.SoundLocation = @"C:\Windows\Media\Windows Error.wav";
+            sound.Play();
+
             MessageBox.Show("Authentication failed, check your emailaddress or password.", e.Exception.InnerException.Message);
             btnLogin.Content = "Login";
             btnLogin.IsEnabled = true;
